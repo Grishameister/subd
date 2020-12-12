@@ -1,0 +1,29 @@
+database: {
+  postgres: {
+    driver_name: "postgres",
+    username: "postgres",
+    password: "qwe12345",
+    db_name: "forum",
+    ssl_mode: "disable",
+    host: "localhost",
+    max_conn: 10
+  }
+}
+
+web: {
+  server: {
+    address: "localhost",
+    port: "8008",
+    host: "pinterest-tp.tk",
+    protocol: "http",
+  }
+}
+
+
+logger: {
+  gin_file:  "/var/log/pinterest/gin.log",
+  gin_level: "debug",  # (release|test|debug)
+  common_file: "/var/log/pinterest/common.log",
+  common_level: "debug",  # (panic|fatal|error|warn|info|debug|trace)
+  stdout_log: "true",
+}
