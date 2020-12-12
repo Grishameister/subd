@@ -13,11 +13,9 @@ func main() {
 	logger.Init()
 	defer logger.Cleanup()
 
-
-
 	dbConn := database.NewDB(&config.Conf.Db)
 	if err := dbConn.Open(); err != nil {
-		config.Lg("main", "main").Fatal("Connection refused")
+		config.Lg("main", "main").Fatal(err.Error())
 		return
 	}
 	defer dbConn.Close()

@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/Grishameister/subd/configs/config"
 	"github.com/Grishameister/subd/internal/database"
+	forumDelivery "github.com/Grishameister/subd/pkg/forum/delivery"
+	"github.com/Grishameister/subd/pkg/user/delivery"
 	"github.com/gin-gonic/gin"
 	"io"
 	"log"
@@ -26,6 +28,9 @@ func New(config *config.Config, db database.IDbConn) *Server {
 
 	r := gin.Default()
 	r.MaxMultipartMemory = 8 << 20
+
+	delivery.AddUserRoutes(r, db)
+	forumDelivery.AddForumRoutes(r, db)
 
 	return &Server{
 		logFile: logFile,
