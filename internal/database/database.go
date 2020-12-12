@@ -1,9 +1,11 @@
 package database
 
 import (
+	"context"
 	"fmt"
-	"github.com/jackc/pgconn"
 	configDB "github.com/Grishameister/subd/configs/config"
+	"github.com/jackc/pgconn"
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 

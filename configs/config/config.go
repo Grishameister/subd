@@ -13,9 +13,9 @@ var (
 )
 
 type Config struct {
-	Db         ConfDB     `mapstructure:"database"`
-	Web        ConfWeb    `mapstructure:"web"`
-	Logger     ConfLogger `mapstructure:"logger"`
+	Db     ConfDB     `mapstructure:"database"`
+	Web    ConfWeb    `mapstructure:"web"`
+	Logger ConfLogger `mapstructure:"logger"`
 }
 
 type ConfDB struct {
@@ -33,9 +33,8 @@ type ConfPostgres struct {
 }
 
 type ConfWeb struct {
-	Server ConfServer           `mapstructure:"server"`
+	Server ConfServer `mapstructure:"server"`
 }
-
 
 type ConfServer struct {
 	Address  string `mapstructure:"address"`
@@ -43,7 +42,6 @@ type ConfServer struct {
 	Host     string `mapstructure:"host"`
 	Protocol string `mapstructure:"protocol"`
 }
-
 
 type ConfApi struct {
 	Address string `mapstructure:"address"`
@@ -65,8 +63,8 @@ func NewConfig() *Config {
 	setDefaultLog()
 
 	confDir, confFile, confExt := splitPath(getConfPath())
-	Lg("config", "newConfig").
-		Infof("Config dir: '%s', config file name: '%s', config ext: '%s'", confDir, confFile, confExt)
+	Lg("configs", "newConfig").
+		Infof("Config dir: '%s', configs file name: '%s', configs ext: '%s'", confDir, confFile, confExt)
 
 	viper.SetConfigName(confFile)
 	viper.SetConfigType(confExt)
@@ -74,14 +72,14 @@ func NewConfig() *Config {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		Lg("config", "newConfig").Fatal("Fatal error config file ", err)
+		Lg("configs", "newConfig").Fatal("Fatal error configs file ", err)
 	}
 
 	conf := new(Config)
 
 	er := viper.Unmarshal(conf)
 	if er != nil {
-		Lg("config", "newConfig").Fatal("Fatal error config file:", er)
+		Lg("configs", "newConfig").Fatal("Fatal error configs file:", er)
 	}
 
 	return conf
@@ -122,7 +120,7 @@ func setDefaultLog() {
 
 func getConfPath() string {
 	argPath := ""
-	flag.StringVar(&argPath, "config", "", "Specify config path")
+	flag.StringVar(&argPath, "configs", "", "Specify configs path")
 	flag.Parse()
 
 	if argPath != "" {
@@ -133,7 +131,7 @@ func getConfPath() string {
 		return confPath
 	}
 
-	return "./configs/yaml/config.yaml"
+	return "./configs/yaml/configs.yaml"
 }
 
 func splitPath(path string) (dir, fileName, ext string) {

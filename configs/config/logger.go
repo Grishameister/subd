@@ -18,7 +18,7 @@ func (l *Logger) Init() {
 			log.SetOutput(file)
 			l.logFile = file
 		} else {
-			Lg("config", "Logger.Init").Error("Failed to log to file, using default stderr")
+			Lg("configs", "Logger.Init").Error("Failed to log to file, using default stderr")
 		}
 	}
 
@@ -48,7 +48,7 @@ func (l *Logger) Init() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	Lg("config", "Logger.Init").
+	Lg("configs", "Logger.Init").
 		Info("Created logger " + strings.ToUpper(log.GetLevel().String()) + " level")
 }
 
