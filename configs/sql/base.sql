@@ -17,7 +17,7 @@ create table if not exists forums (
     foreign key (owner) references users(nickname)
 );
 
-create table if not exists users_forums (
+create table if not exists forums_users (
     forum_slug citext not null,
     nickname citext not null,
     primary key (forum_slug, nickname)
@@ -33,7 +33,8 @@ create table if not exists threads (
     created timestamp with time zone default current_timestamp,
     forum   citext,
 
-    foreign key(author) references users(nickname)
+    foreign key(author) references users(nickname),
+    foreign key(forum) references forums(slug)
 );
 
 
@@ -61,6 +62,8 @@ create table if not exists votes (
   unique (thread, author)
 );
 
+
+
 CREATE OR REPLACE FUNCTION upd_forums_users() RETURNS TRIGGER AS $upd_forums_users$
     BEGIN
         insert into forums_users values (new.forum, new.author) on conflict do nothing;
@@ -71,6 +74,30 @@ $upd_forums_users$ LANGUAGE plpgsql;
 CREATE TRIGGER upd_forums_users_trg
 AFTER INSERT ON threads
     FOR EACH ROW EXECUTE PROCEDURE upd_forums_users();
+
+CREATE OR REPLACE FUNCTION upd_forum_threads() RETURNS TRIGGER AS $upd_forum_threads$
+    BEGIN
+        update forums set threads = threads + 1 where  slug = new.forum;
+        RETURN NEW;  -- возвращаемое значение для триггера AFTER игнорируется
+    END;
+$upd_forum_threads$ LANGUAGE plpgsql;
+
+CREATE TRIGGER upd_forum_threads
+AFTER INSERT ON threads
+    FOR EACH ROW EXECUTE PROCEDURE upd_forum_threads();
+
+
+
+CREATE OR REPLACE FUNCTION upd_forum_posts() RETURNS TRIGGER AS $upd_forum_posts$
+    BEGIN
+        update forums set posts = posts + 1 where  slug = new.forum;
+        RETURN NEW;  -- возвращаемое значение для триггера AFTER игнорируется
+    END;
+$upd_forum_posts$ LANGUAGE plpgsql;
+
+CREATE TRIGGER upd_forum_posts
+AFTER INSERT ON posts
+    FOR EACH ROW EXECUTE PROCEDURE upd_forum_posts();
 
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO postgres;

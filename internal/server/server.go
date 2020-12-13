@@ -6,6 +6,7 @@ import (
 	"github.com/Grishameister/subd/configs/config"
 	"github.com/Grishameister/subd/internal/database"
 	forumDelivery "github.com/Grishameister/subd/pkg/forum/delivery"
+	threadDelivery "github.com/Grishameister/subd/pkg/thread/delivery"
 	"github.com/Grishameister/subd/pkg/user/delivery"
 	"github.com/gin-gonic/gin"
 	"io"
@@ -30,7 +31,9 @@ func New(config *config.Config, db database.IDbConn) *Server {
 	r.MaxMultipartMemory = 8 << 20
 
 	delivery.AddUserRoutes(r, db)
+	threadDelivery.AddThreadRoutes(r, db)
 	forumDelivery.AddForumRoutes(r, db)
+
 
 	return &Server{
 		logFile: logFile,
