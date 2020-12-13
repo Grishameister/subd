@@ -30,6 +30,12 @@ type Thread struct {
 	Votes   int       `json:"votes"`
 }
 
+type ThreadUpdate struct {
+	Message string    `json:"message"`
+	Title   string    `json:"title"`
+}
+
+
 type Post struct {
 	Id        int       `json:"id"`
 	Author    string    `json:"author"`

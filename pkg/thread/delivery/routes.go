@@ -13,5 +13,6 @@ func AddThreadRoutes(r *gin.Engine, db database.IDbConn) {
 	handler := New(uc)
 
 	r.POST("/api/forum/:slug/create", handler.CreateThread)
+	r.POST("/api/thread/:slug_or_id/details", handler.UpdateThread)
 	r.GET("/api/thread/:slug_or_id/details", handler.GetThread)
 }

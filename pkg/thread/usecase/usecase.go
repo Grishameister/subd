@@ -21,3 +21,7 @@ func (uc *Usecase) CreateInForum(t *domain.Thread) (domain.Thread, error) {
 func (uc *Usecase) GetThreadBySlugOrId(slugOrId string) (domain.Thread, error) {
 	return uc.r.GetThreadBySlugOrId(slugOrId)
 }
+
+func (uc *Usecase) UpdateThread(slugOrId string, t *domain.ThreadUpdate) (domain.Thread, error) {
+	return uc.r.UpdateThread(slugOrId, t)
+}

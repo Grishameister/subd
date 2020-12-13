@@ -58,3 +58,69 @@ func (h *Handler) GetForum(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, f)
 }
+
+func (h *Handler) GetThreads(c *gin.Context) {
+	slug := c.Param("slug")
+
+	limit := c.Query("limit")
+
+	if limit == "" {
+		limit = "100"
+	}
+
+	since := c.Query("since")
+
+	order := c.Query("desc")
+
+	if order == "false" || order == "" {
+		order = "asc"
+	} else {
+		order = "desc"
+	}
+
+	threads, err := h.uc.GetThreads(slug, limit, since, order)
+
+	if err != nil {
+		if err.Error() == "forum not found" {
+			c.AbortWithStatusJSON(http.StatusNotFound, utils.Error{Error: err.Error()})
+			return
+		} else {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+	c.JSON(http.StatusOK, threads)
+}
+
+func (h *Handler) GetUsers(c *gin.Context) {
+	slug := c.Param("slug")
+
+	limit := c.Query("limit")
+
+	if limit == "" {
+		limit = "100"
+	}
+
+	since := c.Query("since")
+
+	order := c.Query("desc")
+
+	if order == "false" || order == "" {
+		order = "asc"
+	} else {
+		order = "desc"
+	}
+
+	users, err := h.uc.GetUsers(slug, limit, since, order)
+
+	if err != nil {
+		if err.Error() == "forum not found" {
+			c.AbortWithStatusJSON(http.StatusNotFound, utils.Error{Error: err.Error()})
+			return
+		} else {
+			c.AbortWithStatus(http.StatusInternalServerError)
+			return
+		}
+	}
+	c.JSON(http.StatusOK, users)
+}

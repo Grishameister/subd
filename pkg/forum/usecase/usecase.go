@@ -22,3 +22,11 @@ func (uc *UseCase) CreateForum(f *domain.Forum) (domain.Forum, error) {
 func (uc *UseCase) GetForum(slug string) (domain.Forum, error) {
 	return uc.r.GetForum(slug)
 }
+
+func (uc *UseCase) GetThreads(slug string, limit string, since string, order string) ([]domain.Thread, error) {
+	return uc.r.GetThreads(slug, limit, since, order)
+}
+
+func (uc *UseCase) GetUsers(slug string, limit string, since string, order string) ([]domain.User, error) {
+	return uc.r.GetUsers(slug, limit, since, order)
+}

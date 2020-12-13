@@ -24,4 +24,6 @@ func AddForumRoutes(r *gin.Engine, db database.IDbConn) {
 	})
 
 	r.GET("/api/forum/:slug/details", handler.GetForum)
+	r.GET("/api/forum/:slug/threads", handler.GetThreads)
+	r.GET("/api/forum/:slug/users", handler.GetUsers)
 }

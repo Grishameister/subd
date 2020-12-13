@@ -54,3 +54,21 @@ func (h *Handler) GetThread(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, tr)
 }
+
+func (h *Handler) UpdateThread(c *gin.Context) {
+	slugOrId := c.Param("slug_or_id")
+
+	var t domain.ThreadUpdate
+	if err := c.BindJSON(&t); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	tr, err := h.uc.UpdateThread(slugOrId, &t)
+
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusNotFound, utils.Error{Error: "not found " + slugOrId})
+		return
+	}
+	c.JSON(http.StatusOK, tr)
+}

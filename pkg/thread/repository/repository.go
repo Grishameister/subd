@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgconn"
 	"log"
 	"strconv"
+	"strings"
 )
 
 type Repo struct {
@@ -77,4 +78,46 @@ func (r *Repo) GetThreadBySlugOrId(slugOrId string) (domain.Thread, error) {
 		return t, err
 	}
 	return t, nil
+}
+
+func (r *Repo) UpdateThread(slugOrId string, t *domain.ThreadUpdate) (domain.Thread, error) {
+	var where string
+	var tr domain.Thread
+
+	query := "update threads set "
+	var queryParams []string
+	var values []interface{}
+	i := 0
+	if t.Message != "" {
+		i++
+		queryParams = append(queryParams, "message=$"+strconv.Itoa(i))
+		values = append(values, t.Message)
+	}
+	if t.Title != "" {
+		i++
+		queryParams = append(queryParams, "title=$"+strconv.Itoa(i))
+		values = append(values, t.Title)
+	}
+
+	query += strings.Join(queryParams, ",")
+
+	i++
+	values = append(values, slugOrId)
+
+	if _, err := strconv.Atoi(slugOrId); err != nil {
+		where = " where slug =$" + strconv.Itoa(i)
+	} else {
+		where = " where id =$" + strconv.Itoa(i)
+	}
+	query += where
+
+	query += "returning id, author, forum, created, case when slug is null then '' else slug end, title, message, votes"
+
+	if err := r.db.QueryRow(context.Background(), query, values...).
+		Scan(&tr.Id, &tr.Author, &tr.Forum, &tr.Created, &tr.Slug, &tr.Title, &tr.Message, &tr.Votes); err != nil {
+			config.Lg("thread", "UpdateThread").Error(err.Error())
+			return tr, errors.New("not found thread")
+	}
+
+	return tr, nil
 }
