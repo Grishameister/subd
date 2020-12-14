@@ -6,6 +6,7 @@ import (
 	"github.com/Grishameister/subd/configs/config"
 	"github.com/Grishameister/subd/internal/database"
 	forumDelivery "github.com/Grishameister/subd/pkg/forum/delivery"
+	postsDelivery "github.com/Grishameister/subd/pkg/post/delivery"
 	threadDelivery "github.com/Grishameister/subd/pkg/thread/delivery"
 	"github.com/Grishameister/subd/pkg/user/delivery"
 	"github.com/gin-gonic/gin"
@@ -33,7 +34,7 @@ func New(config *config.Config, db database.IDbConn) *Server {
 	delivery.AddUserRoutes(r, db)
 	threadDelivery.AddThreadRoutes(r, db)
 	forumDelivery.AddForumRoutes(r, db)
-
+	postsDelivery.AddPostsRoutes(r, db)
 
 	return &Server{
 		logFile: logFile,

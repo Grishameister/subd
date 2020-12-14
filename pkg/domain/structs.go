@@ -31,10 +31,9 @@ type Thread struct {
 }
 
 type ThreadUpdate struct {
-	Message string    `json:"message"`
-	Title   string    `json:"title"`
+	Message string `json:"message"`
+	Title   string `json:"title"`
 }
-
 
 type Post struct {
 	Id        int       `json:"id"`
@@ -43,9 +42,9 @@ type Post struct {
 	ForumSlug string    `json:"forum"`
 	IsEdited  bool      `json:"isEdited"`
 	Message   string    `json:"message"`
-	Parent    int       `json:"parent,omitempty"`
+	Parent    int       `json:"parent"`
 	Posts     []int     `json:"-"`
-	Thread    int       `json:"thread"`
+	Thread    int64     `json:"thread"`
 }
 
 type PostFull struct {
@@ -67,4 +66,8 @@ type Status struct {
 	Post   int `json:"post"`
 	Thread int `json:"thread"`
 	User   int `json:"user"`
+}
+
+type PostUpdate struct {
+	Message string `json:"message"`
 }

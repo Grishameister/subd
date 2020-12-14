@@ -42,7 +42,7 @@ create table if not exists posts (
     id         serial primary key,
     parent     int    default 0 ,
     rootParent int  default 0 ,
-    post_path  int [] not null  default '{}'::int[],
+    post_path  bigint [] not null  default '{}'::bigint[],
     message    text not null,
     isEdit     boolean default false,
     forum      citext,

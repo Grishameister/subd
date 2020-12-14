@@ -14,8 +14,7 @@ func AddForumRoutes(r *gin.Engine, db database.IDbConn) {
 	uc := usecase.New(rep)
 	handler := New(uc)
 
-
-	r.POST("/api/forum/:slug", func (c *gin.Context) {
+	r.POST("/api/forum/:slug", func(c *gin.Context) {
 		if strings.HasPrefix(c.Request.RequestURI, "/api/forum/create") {
 			handler.CreateForum(c)
 			return

@@ -57,7 +57,7 @@ func (r *Repo) GetForum(slug string) (domain.Forum, error) {
 func (r *Repo) GetThreads(slug string, limit string, since string, order string) ([]domain.Thread, error) {
 	var threads []domain.Thread
 
-	query := "select id, author, message, forum, title, created,"+
+	query := "select id, author, message, forum, title, created," +
 		"case when slug is null then '' else slug end, votes from threads where forum = $1"
 
 	i := 1
@@ -76,7 +76,6 @@ func (r *Repo) GetThreads(slug string, limit string, since string, order string)
 			values = append(values, since)
 		}
 	}
-
 
 	query += " order by created " + order
 	i++

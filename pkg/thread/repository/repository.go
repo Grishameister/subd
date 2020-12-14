@@ -115,8 +115,8 @@ func (r *Repo) UpdateThread(slugOrId string, t *domain.ThreadUpdate) (domain.Thr
 
 	if err := r.db.QueryRow(context.Background(), query, values...).
 		Scan(&tr.Id, &tr.Author, &tr.Forum, &tr.Created, &tr.Slug, &tr.Title, &tr.Message, &tr.Votes); err != nil {
-			config.Lg("thread", "UpdateThread").Error(err.Error())
-			return tr, errors.New("not found thread")
+		config.Lg("thread", "UpdateThread").Error(err.Error())
+		return tr, errors.New("not found thread")
 	}
 
 	return tr, nil
