@@ -7,7 +7,6 @@ import (
 	"github.com/Grishameister/subd/internal/database"
 	"github.com/Grishameister/subd/pkg/domain"
 	"github.com/jackc/pgconn"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -24,7 +23,7 @@ func New(db database.IDbConn) *Repo {
 
 func (r *Repo) CreateInForum(t *domain.Thread) (domain.Thread, error) {
 	start := "insert into threads (forum, author, message, title"
-	end := " values($1, $2, $3, $4"
+	end := " values((select slug from forums where slug = $1), $2, $3, $4"
 	var placeholders []interface{}
 	i := 4
 	placeholders = append(placeholders, t.Forum, t.Author, t.Message, t.Title)
@@ -42,18 +41,16 @@ func (r *Repo) CreateInForum(t *domain.Thread) (domain.Thread, error) {
 		placeholders = append(placeholders, t.Created)
 	}
 	start += ") "
-	end += ") returning id, created"
+	end += ") returning id, created, forum"
 
-	log.Println(start + end)
-
-	if err := r.db.QueryRow(context.Background(), start+end, placeholders...).Scan(&t.Id, &t.Created); err != nil {
+	if err := r.db.QueryRow(context.Background(), start+end, placeholders...).Scan(&t.Id, &t.Created, &t.Forum); err != nil {
 		config.Lg("forum", "CreateForum").Error(err.Error())
 		if pqErr, ok := err.(*pgconn.PgError); ok {
 			if pqErr.Code == "23505" {
 				tr, _ := r.GetThreadBySlugOrId(t.Slug)
 				return tr, errors.New("thread exists")
 			}
-			if pqErr.Code == "23503" {
+			if pqErr.Code == "23503" || pqErr.Code == "23502" {
 				return *t, errors.New("user or forum not found")
 			}
 		}
@@ -98,6 +95,13 @@ func (r *Repo) UpdateThread(slugOrId string, t *domain.ThreadUpdate) (domain.Thr
 		queryParams = append(queryParams, "title=$"+strconv.Itoa(i))
 		values = append(values, t.Title)
 	}
+	if i == 0 {
+		tr, err := r.GetThreadBySlugOrId(slugOrId)
+		if err != nil {
+			return domain.Thread{}, err
+		}
+		return tr, nil
+	}
 
 	query += strings.Join(queryParams, ",")
 
@@ -120,4 +124,35 @@ func (r *Repo) UpdateThread(slugOrId string, t *domain.ThreadUpdate) (domain.Thr
 	}
 
 	return tr, nil
+}
+
+func (r *Repo) VoteThread(slugOrId string, v *domain.Vote) (domain.Thread, error) {
+	t, err := r.GetThreadBySlugOrId(slugOrId)
+
+	if err != nil {
+		return t, errors.New("thread not found")
+	}
+
+	if _, err := r.db.Exec(context.Background(), "insert into votes (author, thread, vote) values ($1, $2, $3) "+
+		"on conflict (thread, author) do update set vote = $3", v.ProfileNickname, t.Id, v.Voice); err != nil {
+		config.Lg("thread", "VoteThread").Error(err.Error())
+		if pqErr, ok := err.(*pgconn.PgError); ok {
+			if pqErr.Code == "23505" {
+				tr, _ := r.GetThreadBySlugOrId(t.Slug)
+				return tr, errors.New("thread exists")
+			}
+			if pqErr.Code == "23503" || pqErr.Code == "23502" {
+				return t, errors.New("user not found")
+			}
+		}
+		return t, err
+	}
+
+	t, err = r.GetThreadBySlugOrId(slugOrId)
+
+	if err != nil {
+		return t, errors.New("thread not found")
+	}
+
+	return t, nil
 }

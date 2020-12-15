@@ -72,3 +72,25 @@ func (h *Handler) UpdateThread(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, tr)
 }
+
+func (h *Handler) VoteThread(c *gin.Context) {
+	slugOrId := c.Param("slug_or_id")
+
+	var v domain.Vote
+	if err := c.BindJSON(&v); err != nil {
+		c.AbortWithStatus(http.StatusBadRequest)
+		return
+	}
+
+	tr, err := h.uc.VoteThread(slugOrId, &v)
+	if err != nil {
+		if err.Error() == "thread not found" || err.Error() == "user not found" {
+			c.AbortWithStatusJSON(http.StatusNotFound, utils.Error{Error: err.Error()})
+			return
+		}
+		c.AbortWithStatusJSON(http.StatusInternalServerError, utils.Error{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, tr)
+}

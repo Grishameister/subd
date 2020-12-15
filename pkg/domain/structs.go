@@ -40,7 +40,7 @@ type Post struct {
 	Author    string    `json:"author"`
 	Created   time.Time `json:"created"`
 	ForumSlug string    `json:"forum"`
-	IsEdited  bool      `json:"isEdited"`
+	IsEdited  bool      `json:"isEdited,omitempty"`
 	Message   string    `json:"message"`
 	Parent    int       `json:"parent"`
 	Posts     []int     `json:"-"`

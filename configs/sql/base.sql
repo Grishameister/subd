@@ -18,8 +18,8 @@ create table if not exists forums (
 );
 
 create table if not exists forums_users (
-    forum_slug citext not null,
-    nickname citext not null,
+    forum_slug citext not null  collate "ucs_basic",
+    nickname citext not null  collate "ucs_basic",
     primary key (forum_slug, nickname)
 );
 
@@ -66,7 +66,7 @@ create table if not exists votes (
 
 CREATE OR REPLACE FUNCTION upd_forums_users() RETURNS TRIGGER AS $upd_forums_users$
     BEGIN
-        insert into forums_users values (new.forum, new.author) on conflict do nothing;
+        insert into forums_users values (new.forum, (select nickname from users where new.author = nickname)) on conflict do nothing;
         RETURN NEW;  -- возвращаемое значение для триггера AFTER игнорируется
     END;
 $upd_forums_users$ LANGUAGE plpgsql;
@@ -74,6 +74,17 @@ $upd_forums_users$ LANGUAGE plpgsql;
 CREATE TRIGGER upd_forums_users_trg
 AFTER INSERT ON threads
     FOR EACH ROW EXECUTE PROCEDURE upd_forums_users();
+
+CREATE OR REPLACE FUNCTION upd_forums_users_posts() RETURNS TRIGGER AS $upd_forums_users_posts$
+    BEGIN
+        insert into forums_users values (new.forum, (select nickname from users where new.author = nickname)) on conflict do nothing;
+        RETURN NEW;  -- возвращаемое значение для триггера AFTER игнорируется
+    END;
+$upd_forums_users_posts$ LANGUAGE plpgsql;
+
+CREATE TRIGGER upd_forums_users_posts_trg
+AFTER INSERT ON posts
+    FOR EACH ROW EXECUTE PROCEDURE upd_forums_users_posts();
 
 CREATE OR REPLACE FUNCTION upd_forum_threads() RETURNS TRIGGER AS $upd_forum_threads$
     BEGIN
@@ -99,6 +110,25 @@ CREATE TRIGGER upd_forum_posts
 AFTER INSERT ON posts
     FOR EACH ROW EXECUTE PROCEDURE upd_forum_posts();
 
+
+create or replace function upd_votes()
+  returns trigger as $upd_votes$
+begin
+  if (tg_op = 'INSERT')
+  then
+    update threads set votes = votes + new.vote where id = new.thread;
+  elseif (tg_op = 'UPDATE')
+    then
+      update threads set votes = votes + (new.vote - old.vote) where id = new.thread;
+  end if;
+  return new;
+end;
+$upd_votes$
+language plpgsql;
+
+CREATE TRIGGER upd_votes_trg
+AFTER INSERT OR UPDATE ON votes
+    FOR EACH ROW EXECUTE PROCEDURE upd_votes();
 
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO postgres;
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO postgres;

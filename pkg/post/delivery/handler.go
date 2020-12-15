@@ -41,6 +41,10 @@ func (h *Handler) CreatePosts(c *gin.Context) {
 			c.AbortWithStatusJSON(http.StatusNotFound, utils.Error{Error: err.Error()})
 			return
 		}
+		if err.Error() == "user not found" {
+			c.AbortWithStatusJSON(http.StatusNotFound, utils.Error{Error: err.Error()})
+			return
+		}
 		c.AbortWithStatus(http.StatusInternalServerError)
 		return
 	}

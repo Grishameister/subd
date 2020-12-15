@@ -25,3 +25,7 @@ func (uc *Usecase) GetThreadBySlugOrId(slugOrId string) (domain.Thread, error) {
 func (uc *Usecase) UpdateThread(slugOrId string, t *domain.ThreadUpdate) (domain.Thread, error) {
 	return uc.r.UpdateThread(slugOrId, t)
 }
+
+func (uc *Usecase) VoteThread(slugOrId string, v *domain.Vote) (domain.Thread, error) {
+	return uc.r.VoteThread(slugOrId, v)
+}

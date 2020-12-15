@@ -8,7 +8,6 @@ import (
 	"github.com/Grishameister/subd/pkg/domain"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx"
-	"log"
 	"strconv"
 	"strings"
 )
@@ -23,14 +22,12 @@ func New(db database.IDbConn) *UserRepo {
 
 func (r *UserRepo) CreateUser(u *domain.User) ([]domain.User, error) {
 	var users []domain.User
-	log.Println(u.Nickname)
 	_, err := r.db.Exec(context.Background(), "insert into users (nickname, about, fullname, email) "+
 		"values ($1, $2, $3,$4)", u.Nickname, u.About, u.Fullname, u.Email)
 	if err != nil {
 		config.Lg("user", "CreateUser").Error(err.Error())
 
 		if pqErr, ok := err.(*pgconn.PgError); ok {
-			log.Println(pqErr.Code)
 			if pqErr.Code == "23505" {
 				rows, err := r.db.Query(context.Background(), "select nickname, about, fullname, email "+
 					"from users where nickname = $1 or email = $2", u.Nickname, u.Email)
@@ -85,14 +82,23 @@ func (r *UserRepo) UpdateUser(u *domain.User) (domain.User, error) {
 		values = append(values, u.Fullname)
 	}
 
+	if i == 0 {
+		u, err := r.GetUser(u.Nickname)
+		if err != nil {
+			return domain.User{}, err
+		}
+		return u, nil
+	}
+
 	query += strings.Join(queryParams, ",")
 	i++
-	query += " where nickname=$" + strconv.Itoa(i) + " returning nickname"
+	query += " where nickname=$" + strconv.Itoa(i) + " returning nickname, email, fullname, about"
 
 	values = append(values, u.Nickname)
 	var nick string
+
 	if err := r.db.QueryRow(context.Background(), query,
-		values...).Scan(&nick); err != nil {
+		values...).Scan(&nick, &u.Email, &u.Fullname, &u.About); err != nil {
 		config.Lg("user", "UpdateUser").Error("UpdateUser: ", err.Error())
 		if pgx.ErrNoRows.Error() == err.Error() {
 			return *u, errors.New("not found user")

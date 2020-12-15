@@ -10,7 +10,6 @@ import (
 	"github.com/Grishameister/subd/pkg/forum"
 	"github.com/Grishameister/subd/pkg/thread"
 	"github.com/Grishameister/subd/pkg/user"
-	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -57,6 +56,10 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 		return nil, errors.New("thread not found")
 	}
 	var b strings.Builder
+
+	if len(posts) == 0 {
+		return posts, nil
+	}
 
 	query := "insert into posts(author, created, forum, message, parent, thread, post_path) values "
 
@@ -126,17 +129,17 @@ func (r *Repo) GetPosts(slugOrId string, limit string, since string, sort string
 		if order == "asc" {
 			if since != "" {
 				i++
-				b.WriteString(" and created > $" + strconv.Itoa(i))
+				b.WriteString(" and id > $" + strconv.Itoa(i))
 				values = append(values, since)
 			}
 		} else {
 			if since != "" {
 				i++
-				b.WriteString(" and created < $" + strconv.Itoa(i))
+				b.WriteString(" and id < $" + strconv.Itoa(i))
 				values = append(values, since)
 			}
 		}
-		b.WriteString(" order by created " + order)
+		b.WriteString(" order by id " + order)
 		i++
 		b.WriteString(" limit $" + strconv.Itoa(i))
 		values = append(values, limit)
@@ -185,8 +188,6 @@ func (r *Repo) GetPosts(slugOrId string, limit string, since string, sort string
 		b.WriteString(", post_path[2:]")
 	}
 
-	log.Println(b.String())
-
 	rows, err := r.db.Query(context.Background(), b.String(), values...)
 
 	if err != nil {
@@ -195,7 +196,7 @@ func (r *Repo) GetPosts(slugOrId string, limit string, since string, sort string
 	}
 	defer rows.Close()
 
-	var posts []domain.Post
+	posts := make([]domain.Post, 0)
 	for rows.Next() {
 		p := domain.Post{
 			Parent: 0,
@@ -204,7 +205,6 @@ func (r *Repo) GetPosts(slugOrId string, limit string, since string, sort string
 			config.Lg("post", "GetPosts").Error(err.Error())
 			return nil, err
 		}
-		log.Println(p.Parent)
 		posts = append(posts, p)
 	}
 	return posts, nil
@@ -240,7 +240,19 @@ func (r *Repo) GetPost(id string, related string) (domain.PostFull, error) {
 func (r *Repo) UpdatePost(id string, message string) (domain.Post, error) {
 	var p domain.Post
 
-	if err := r.db.QueryRow(context.Background(), "update posts set isEdit = true, message = $1 where id = $2 "+
+	if message == "" {
+		if err := r.db.QueryRow(context.Background(), "select "+
+			"author, created, forum, message, parent, thread, id, isEdit from posts where id=$1", id).
+			Scan(&p.Author, &p.Created, &p.ForumSlug, &p.Message,
+				&p.Parent, &p.Thread, &p.Id, &p.IsEdited); err != nil {
+			config.Lg("post", "UpdatePost").Error(err.Error())
+			return p, err
+		}
+		return p, nil
+	}
+
+	if err := r.db.QueryRow(context.Background(), "update posts set isEdit = "+
+		"(case when message = $1 then false else true end), message = $1 where id = $2 "+
 		"returning author, created, forum, message, parent, thread, id, isEdit", message, id).
 		Scan(&p.Author, &p.Created, &p.ForumSlug, &p.Message,
 			&p.Parent, &p.Thread, &p.Id, &p.IsEdited); err != nil {
