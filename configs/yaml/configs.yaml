@@ -1,7 +1,7 @@
 database: {
   postgres: {
     driver_name: "postgres",
-    username: "postgres",
+    username: "docker",
     password: "qwe12345",
     db_name: "forum",
     ssl_mode: "disable",
@@ -12,8 +12,8 @@ database: {
 
 web: {
   server: {
-    address: "localhost",
-    port: "8008",
+    address: "0.0.0.0",
+    port: "5000",
     host: "pinterest-tp.tk",
     protocol: "http",
   }
@@ -24,6 +24,6 @@ logger: {
   gin_file:  "/var/log/pinterest/gin.log",
   gin_level: "release",  # (release|test|debug)
   common_file: "/var/log/pinterest/common.log",
-  common_level: "debug",  # (panic|fatal|error|warn|info|debug|trace)
+  common_level: "panic",  # (panic|fatal|error|warn|info|debug|trace)
   stdout_log: "true",
 }
