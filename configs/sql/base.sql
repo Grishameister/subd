@@ -53,6 +53,7 @@ create table if not exists posts (
     foreign key (author) references users (nickname)
 );
 
+
 create table if not exists votes (
   author citext,
   thread int,
@@ -62,7 +63,9 @@ create table if not exists votes (
   unique (thread, author)
 );
 
-
+create index if not exists threads_forum_created_idx on threads (forum,created);
+create index if not exists posts_thread_id_idx on posts (thread, id);
+create index if not exists posts_thread_mpath_idx on posts (thread, post_path);
 
 CREATE OR REPLACE FUNCTION upd_forums_users() RETURNS TRIGGER AS $upd_forums_users$
     BEGIN

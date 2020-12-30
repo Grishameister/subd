@@ -22,7 +22,7 @@ web: {
 
 logger: {
   gin_file:  "/var/log/pinterest/gin.log",
-  gin_level: "debug",  # (release|test|debug)
+  gin_level: "release",  # (release|test|debug)
   common_file: "/var/log/pinterest/common.log",
   common_level: "debug",  # (panic|fatal|error|warn|info|debug|trace)
   stdout_log: "true",

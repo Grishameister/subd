@@ -12,7 +12,6 @@ import (
 	"github.com/Grishameister/subd/pkg/user"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Repo struct {
@@ -61,16 +60,14 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 		return posts, nil
 	}
 
-	query := "insert into posts(author, created, forum, message, parent, thread, post_path) values "
+	query := "insert into posts(author, forum, message, parent, thread, post_path) values "
 
 	b.WriteString(query)
-	timenow := time.Now()
-	values := make([]interface{}, 0, len(posts)*6)
+	values := make([]interface{}, 0, len(posts)*5)
 
 	for i, post := range posts {
 		post.Thread = int64(t.Id)
 		post.ForumSlug = t.Forum
-		post.Created = timenow
 
 		if err := r.checkParent(int(post.Thread), int64(post.Parent)); err != nil && post.Parent != 0 {
 			return nil, err
@@ -80,17 +77,17 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 			return nil, err
 		}
 
-		offset := i * 6
-		b.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, $%d, "+
+		offset := i * 5
+		b.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, "+
 			"array_append((SELECT post_path FROM posts WHERE id = $%d), (SELECT last_value FROM posts_id_seq)))",
-			offset+1, offset+2, offset+3, offset+4, offset+5, offset+6, offset+5))
+			offset+1, offset+2, offset+3, offset+4, offset+5, offset+4))
 		if i != len(posts)-1 {
 			b.WriteString(",")
 		}
-		values = append(values, post.Author, post.Created, post.ForumSlug, post.Message, post.Parent, post.Thread)
+		values = append(values, post.Author, post.ForumSlug, post.Message, post.Parent, post.Thread)
 	}
 
-	b.WriteString(" returning id")
+	b.WriteString(" returning id, created")
 
 	rows, err := r.db.Query(context.Background(), b.String(), values...)
 
@@ -102,7 +99,7 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 
 	j := 0
 	for rows.Next() {
-		if err := rows.Scan(&posts[j].Id); err != nil {
+		if err := rows.Scan(&posts[j].Id, &posts[j].Created); err != nil {
 			config.Lg("posts", "CreatePosts").Error(err.Error())
 			return nil, err
 		}

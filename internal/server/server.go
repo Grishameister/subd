@@ -27,6 +27,7 @@ type Server struct {
 }
 
 func New(config *config.Config, db database.IDbConn) *Server {
+	gin.SetMode(gin.ReleaseMode)
 	logFile := setupGinLogger()
 
 	r := gin.Default()

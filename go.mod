@@ -13,6 +13,7 @@ require (
 	github.com/jackc/pgx v3.6.0+incompatible
 	github.com/jackc/pgx/v4 v4.10.0
 	github.com/lib/pq v1.9.0
+	github.com/mailru/easyjson v0.7.6
 	github.com/mattn/go-colorable v0.1.8 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
 	github.com/mkideal/cli v0.2.3 // indirect
