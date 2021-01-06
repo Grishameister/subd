@@ -55,15 +55,23 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 		return nil, errors.New("thread not found")
 	}
 	var b strings.Builder
+	var ub strings.Builder
 
 	if len(posts) == 0 {
 		return posts, nil
 	}
 
 	query := "insert into posts(author, forum, message, parent, thread, post_path) values "
+	usForQuery := "insert into forums_users values "
 
 	b.WriteString(query)
+	ub.WriteString(usForQuery)
 	values := make([]interface{}, 0, len(posts)*5)
+	uValues := make([]interface{}, 0, len(posts) + 1)
+
+	uValues = append(uValues, t.Forum)
+
+	// insert into forums_users values (new.forum, (select nickname from users where new.author = nickname)) on conflict do nothing;
 
 	for i, post := range posts {
 		post.Thread = int64(t.Id)
@@ -81,21 +89,33 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 		b.WriteString(fmt.Sprintf("($%d, $%d, $%d, $%d, $%d, "+
 			"array_append((SELECT post_path FROM posts WHERE id = $%d), (SELECT last_value FROM posts_id_seq)))",
 			offset+1, offset+2, offset+3, offset+4, offset+5, offset+4))
+
+		ub.WriteString(fmt.Sprintf("($1, (select nickname from users where nickname = $%d))", i + 2))
+
 		if i != len(posts)-1 {
 			b.WriteString(",")
+			ub.WriteString(",")
 		}
 		values = append(values, post.Author, post.ForumSlug, post.Message, post.Parent, post.Thread)
+		uValues = append(uValues, post.Author)
 	}
 
 	b.WriteString(" returning id, created")
+	ub.WriteString(" on conflict do nothing")
 
-	rows, err := r.db.Query(context.Background(), b.String(), values...)
+	tx, err := r.db.Begin(context.Background())
+	if err != nil {
+		config.Lg("post", "Begin").Error(err.Error())
+		return nil, err
+	}
+	defer tx.Rollback(context.Background())
+
+	rows, err := tx.Query(context.Background(), b.String(), values...)
 
 	if err != nil {
 		config.Lg("post", "CreatePosts").Error(err.Error())
 		return nil, err
 	}
-	defer rows.Close()
 
 	j := 0
 	for rows.Next() {
@@ -105,6 +125,23 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 		}
 		j++
 	}
+	rows.Close()
+
+	if _, err := tx.Exec(context.Background(), "update forums set posts = posts + $2 where slug = $1", t.Forum, len(posts)); err != nil {
+		config.Lg("posts", "Update").Error(err.Error())
+		return nil, err
+	}
+
+	if _, err := tx.Exec(context.Background(), ub.String(), uValues...); err != nil {
+		config.Lg("post", "withoutTrigger").Error(err.Error())
+		return nil, err
+	}
+
+	if err := tx.Commit(context.Background()); err != nil {
+		config.Lg("posts", "Commit").Error(err.Error())
+		return nil, err
+	}
+
 	return posts, nil
 }
 

@@ -78,17 +78,6 @@ CREATE TRIGGER upd_forums_users_trg
 AFTER INSERT ON threads
     FOR EACH ROW EXECUTE PROCEDURE upd_forums_users();
 
-CREATE OR REPLACE FUNCTION upd_forums_users_posts() RETURNS TRIGGER AS $upd_forums_users_posts$
-    BEGIN
-        insert into forums_users values (new.forum, (select nickname from users where new.author = nickname)) on conflict do nothing;
-        RETURN NEW;  -- возвращаемое значение для триггера AFTER игнорируется
-    END;
-$upd_forums_users_posts$ LANGUAGE plpgsql;
-
-CREATE TRIGGER upd_forums_users_posts_trg
-AFTER INSERT ON posts
-    FOR EACH ROW EXECUTE PROCEDURE upd_forums_users_posts();
-
 CREATE OR REPLACE FUNCTION upd_forum_threads() RETURNS TRIGGER AS $upd_forum_threads$
     BEGIN
         update forums set threads = threads + 1 where  slug = new.forum;
@@ -99,19 +88,6 @@ $upd_forum_threads$ LANGUAGE plpgsql;
 CREATE TRIGGER upd_forum_threads
 AFTER INSERT ON threads
     FOR EACH ROW EXECUTE PROCEDURE upd_forum_threads();
-
-
-
-CREATE OR REPLACE FUNCTION upd_forum_posts() RETURNS TRIGGER AS $upd_forum_posts$
-    BEGIN
-        update forums set posts = posts + 1 where  slug = new.forum;
-        RETURN NEW;  -- возвращаемое значение для триггера AFTER игнорируется
-    END;
-$upd_forum_posts$ LANGUAGE plpgsql;
-
-CREATE TRIGGER upd_forum_posts
-AFTER INSERT ON posts
-    FOR EACH ROW EXECUTE PROCEDURE upd_forum_posts();
 
 
 create or replace function upd_votes()
