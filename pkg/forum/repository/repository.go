@@ -8,7 +8,6 @@ import (
 	"github.com/Grishameister/subd/pkg/domain"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx"
-	"log"
 	"strconv"
 )
 
@@ -149,7 +148,6 @@ func (r *Repo) GetUsers(slug string, limit string, since string, order string) (
 			config.Lg("forum", "GetUsers").Error(err.Error())
 			return nil, err
 		}
-		log.Println(u.Nickname)
 		users = append(users, u)
 	}
 

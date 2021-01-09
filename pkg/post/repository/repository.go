@@ -10,8 +10,10 @@ import (
 	"github.com/Grishameister/subd/pkg/forum"
 	"github.com/Grishameister/subd/pkg/thread"
 	"github.com/Grishameister/subd/pkg/user"
+	"log"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
 
 type Repo struct {
@@ -20,6 +22,8 @@ type Repo struct {
 	fr forum.IRepo
 	ur user.IRepo
 }
+
+var counter uint32
 
 func New(db database.IDbConn, tr thread.IRepo, fr forum.IRepo, ur user.IRepo) *Repo {
 	return &Repo{
@@ -140,6 +144,15 @@ func (r *Repo) CreatePosts(slugOrId string, posts []*domain.Post) ([]*domain.Pos
 	if err := tx.Commit(context.Background()); err != nil {
 		config.Lg("posts", "Commit").Error(err.Error())
 		return nil, err
+	}
+
+	atomic.AddUint32(&counter, uint32(len(posts)))
+
+	if counter >= 1500000 {
+		if _, err := r.db.Exec(context.Background(), "cluster"); err != nil {
+			return nil, err
+		}
+		log.Println("cluster")
 	}
 
 	return posts, nil

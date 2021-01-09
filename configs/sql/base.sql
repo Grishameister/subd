@@ -7,6 +7,8 @@ create table if not exists users (
     email citext unique not null
 );
 
+cluster users using users_pkey;
+
 create table if not exists forums (
     owner citext not null,
     slug citext unique not null primary key,
@@ -17,11 +19,15 @@ create table if not exists forums (
     foreign key (owner) references users(nickname)
 );
 
+cluster forums using forums_pkey;
+
 create table if not exists forums_users (
     forum_slug citext not null  collate "ucs_basic",
     nickname citext not null  collate "ucs_basic",
     primary key (forum_slug, nickname)
 );
+
+cluster forums_users using forums_users_pkey;
 
 create table if not exists threads (
     id      serial primary key,
@@ -37,6 +43,8 @@ create table if not exists threads (
     foreign key(forum) references forums(slug)
 );
 
+create index if not exists threads_forum_created_idx on threads (forum,created);
+cluster threads using threads_forum_created_idx;
 
 create table if not exists posts (
     id         serial primary key,
@@ -53,6 +61,9 @@ create table if not exists posts (
     foreign key (author) references users (nickname)
 );
 
+create index if not exists posts_thread_id_idx on posts (thread, id);
+create index if not exists posts_thread_path_idx on posts (thread, post_path);
+create index if not exists posts_path_idx on posts (post_path, (post_path[1]));
 
 create table if not exists votes (
   author citext,
@@ -62,10 +73,6 @@ create table if not exists votes (
   foreign key(author) references users(nickname),
   unique (thread, author)
 );
-
-create index if not exists threads_forum_created_idx on threads (forum,created);
-create index if not exists posts_thread_id_idx on posts (thread, id);
-create index if not exists posts_thread_mpath_idx on posts (thread, post_path);
 
 CREATE OR REPLACE FUNCTION upd_forums_users() RETURNS TRIGGER AS $upd_forums_users$
     BEGIN

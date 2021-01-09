@@ -99,7 +99,6 @@ func (r *UserRepo) UpdateUser(u *domain.User) (domain.User, error) {
 
 	if err := r.db.QueryRow(context.Background(), query,
 		values...).Scan(&nick, &u.Email, &u.Fullname, &u.About); err != nil {
-		config.Lg("user", "UpdateUser").Error("UpdateUser: ", err.Error())
 		if pgx.ErrNoRows.Error() == err.Error() {
 			return *u, errors.New("not found user")
 		}
